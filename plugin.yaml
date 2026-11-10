@@ -13,4 +13,5 @@ description: "Hermes-native OpenAPI request preflight, live response verificatio
 license: MIT
 provides_tools:
   - contractguard_ping
+  - contractguard_inspect
 provides_hooks: []

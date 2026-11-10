@@ -29,21 +29,26 @@ __version__ = "0.1.0"
 __all__ = ["__version__", "register"]
 
 
+from .tools.inspect import inspect as _inspect_handler
 from .tools.ping import ping as _ping_handler
-from .tools.schemas import PING
+from .tools.schemas import INSPECT, PING
 
 
 def register(ctx: Any) -> None:
     """Register ContractGuard tools and hooks with Hermes.
 
-    Slice 0 registers a single health-check tool so the Hermes plugin skeleton,
-    manifest, and registration path can be validated end to end. No validation,
-    storage, or network work happens here.
+    Slice 1 registers the health check and the OpenAPI inspector.
     """
     ctx.register_tool(
         name="contractguard_ping",
         toolset="contractguard",
         schema=PING,
         handler=_ping_handler,
+    )
+    ctx.register_tool(
+        name="contractguard_inspect",
+        toolset="contractguard",
+        schema=INSPECT,
+        handler=_inspect_handler,
     )
     _ = ctx

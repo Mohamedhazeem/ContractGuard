@@ -1,0 +1,113 @@
+openapi: 3.2.0
+info:
+  title: Giftshop API
+  version: 1.0.0
+  description: >-
+    Deterministic fixture used by ContractGuard unit tests, adapter spikes, and
+    the demo. The broken demo mode returns price as a string while HTTP status
+    remains 200.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local demo target (loopback only)
+
+paths:
+  /products:
+    get:
+      operationId: listProducts
+      summary: List products
+      responses:
+        "200":
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+    post:
+      operationId: createProduct
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewProduct"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: Invalid request
+
+  /products/{product_id}:
+    get:
+      operationId: getProduct
+      summary: Fetch one product
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          description: Stable demo product identifier.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+
+components:
+  schemas:
+    NewProduct:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - shortCode
+        - name
+        - description
+        - price
+        - category
+        - image
+      properties:
+        id:
+          type: string
+        shortCode:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: double
+        category:
+          type: string
+        image:
+          type: string
+          format: uri
+
+    Product:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+          format: double

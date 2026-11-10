@@ -21,6 +21,7 @@ from .models import (
     Finding,
     HttpRequest,
     HttpResponse,
+    InspectionReport,
     LoadedSpec,
     Operation,
     ServiceRegistration,
@@ -38,6 +39,21 @@ class Clock(Protocol):
 
 class SpecLoader(Protocol):
     """Load and validate OpenAPI documents into domain snapshots."""
+
+    def inspect(self, path: Path) -> InspectionReport:
+        """Inspect one local OpenAPI document.
+
+        Implementations enforce the file-size cap, reject external ``$ref``
+        values, validate the document, and build the operation inventory.
+
+        Args:
+            path: Exact local path supplied by the user.
+
+        Returns:
+            A complete inspection report, including ``VALID``, ``INVALID_SPEC``,
+            or ``UNSUPPORTED`` status.
+        """
+        ...
 
     def load_file(self, path: Path) -> LoadedSpec:
         """Read, parse, validate, and normalize a local JSON/YAML document.

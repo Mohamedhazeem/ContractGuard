@@ -52,6 +52,12 @@ class SpecValidationError(ContractGuardError):
     code = "INVALID_SPEC"
 
 
+class UnsupportedSpecError(SpecValidationError):
+    """The document parsed but targets an unsupported OpenAPI version or feature."""
+
+    code = "UNSUPPORTED_SPEC"
+
+
 class PolicyError(ContractGuardError):
     """A safety policy refused the requested action."""
 

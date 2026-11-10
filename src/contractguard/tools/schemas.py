@@ -21,3 +21,27 @@ PING = {
         "additionalProperties": False,
     },
 }
+
+INSPECT = {
+    "name": "contractguard_inspect",
+    "description": (
+        "Load and validate a local OpenAPI document without making network "
+        "requests. Returns the OpenAPI version, API title and version, operation "
+        "inventory, declared response codes, request-body presence, required "
+        "inputs, example availability, validation errors, coverage gaps, and a "
+        "SHA-256 of the normalized document."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "spec_path": {
+                "type": "string",
+                "description": (
+                    "Absolute or relative path to a local JSON or YAML OpenAPI document."
+                ),
+            }
+        },
+        "required": ["spec_path"],
+        "additionalProperties": False,
+    },
+}
