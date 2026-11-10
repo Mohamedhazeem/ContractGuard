@@ -14,4 +14,7 @@ license: MIT
 provides_tools:
   - contractguard_ping
   - contractguard_inspect
-provides_hooks: []
+  - contractguard_register
+  - contractguard_promote_baseline
+provides_hooks:
+  - pre_tool_call

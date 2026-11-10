@@ -1,44 +1,21 @@
-"""ContractGuard implementation package.
-
-Layer map (dependencies point inward):
-
-``domain/``
-    Pure enums, immutable records, invariants, ports, and domain errors. Standard
-    library only. No I/O, no third-party libraries, no Hermes imports.
-``services/``
-    Use-case orchestration. Depends on ``domain/`` and receives adapters through
-    constructor injection.
-``adapters/``
-    Concrete I/O: SQLite repositories, HTTPX transport, OpenAPI parsing and
-    validation, Hermes storage glue. Translates external data into domain types.
-``tools/``
-    Thin Hermes tool handlers and JSON schemas.
-``hooks/``
-    Hermes lifecycle hooks.
-
-The root ``__init__.py`` of the plugin directory re-exports :func:`register` from
-this module. Keep registration fast, synchronous, and free of I/O.
-"""
+"""ContractGuard implementation package."""
 
 from __future__ import annotations
 
-from typing import Any
-
 __version__ = "0.1.0"
 
-__all__ = ["__version__", "register"]
+from typing import Any
 
-
+from .hooks.pre_tool_call import require_promotion_approval
 from .tools.inspect import inspect as _inspect_handler
 from .tools.ping import ping as _ping_handler
-from .tools.schemas import INSPECT, PING
+from .tools.promote import promote_baseline as _promote_handler
+from .tools.register import register as _register_handler
+from .tools.schemas import INSPECT, PING, PROMOTE, REGISTER
 
 
 def register(ctx: Any) -> None:
-    """Register ContractGuard tools and hooks with Hermes.
-
-    Slice 1 registers the health check and the OpenAPI inspector.
-    """
+    """Register ContractGuard tools and hooks with Hermes."""
     ctx.register_tool(
         name="contractguard_ping",
         toolset="contractguard",
@@ -51,4 +28,17 @@ def register(ctx: Any) -> None:
         schema=INSPECT,
         handler=_inspect_handler,
     )
+    ctx.register_tool(
+        name="contractguard_register",
+        toolset="contractguard",
+        schema=REGISTER,
+        handler=_register_handler,
+    )
+    ctx.register_tool(
+        name="contractguard_promote_baseline",
+        toolset="contractguard",
+        schema=PROMOTE,
+        handler=_promote_handler,
+    )
+    ctx.register_hook("pre_tool_call", require_promotion_approval)
     _ = ctx

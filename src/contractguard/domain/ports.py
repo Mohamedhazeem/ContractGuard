@@ -195,6 +195,10 @@ class BaselineRepository(Protocol):
         """Return recent baselines, newest first, bounded by ``limit``."""
         ...
 
+    def add(self, baseline: Baseline) -> Baseline:
+        """Insert a baseline row without changing the current baseline."""
+        ...
+
     def promote(self, baseline: Baseline, *, expected_current_id: str | None) -> Baseline:
         """Add a new current baseline using transactional compare-and-swap.
 
