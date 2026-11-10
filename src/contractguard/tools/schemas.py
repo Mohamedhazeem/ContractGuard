@@ -81,6 +81,20 @@ TEST = {
     },
 }
 
+DIFF = {
+    "name": "contractguard_diff",
+    "description": "Compare a candidate OpenAPI document with the approved baseline.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "service_id": {"type": "string"},
+            "candidate_spec_path": {"type": "string"},
+        },
+        "required": ["service_id", "candidate_spec_path"],
+        "additionalProperties": False,
+    },
+}
+
 PROMOTE = {
     "name": "contractguard_promote_baseline",
     "description": "Promote an exact candidate spec hash to the approved baseline.",

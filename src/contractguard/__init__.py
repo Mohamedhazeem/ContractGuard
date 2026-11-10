@@ -7,11 +7,12 @@ __version__ = "0.1.0"
 from typing import Any
 
 from .hooks.pre_tool_call import require_promotion_approval
+from .tools.diff import diff_contract_tool as _diff_handler
 from .tools.inspect import inspect as _inspect_handler
 from .tools.ping import ping as _ping_handler
 from .tools.promote import promote_baseline as _promote_handler
 from .tools.register import register as _register_handler
-from .tools.schemas import INSPECT, PING, PROMOTE, REGISTER, TEST, VALIDATE_REQUEST
+from .tools.schemas import DIFF, INSPECT, PING, PROMOTE, REGISTER, TEST, VALIDATE_REQUEST
 from .tools.test_api import test_api as _test_handler
 from .tools.validate_request import validate_request as _validate_request_handler
 
@@ -47,6 +48,12 @@ def register(ctx: Any) -> None:
         toolset="contractguard",
         schema=TEST,
         handler=_test_handler,
+    )
+    ctx.register_tool(
+        name="contractguard_diff",
+        toolset="contractguard",
+        schema=DIFF,
+        handler=_diff_handler,
     )
     ctx.register_tool(
         name="contractguard_promote_baseline",

@@ -86,10 +86,15 @@ class FindingCode(str, Enum):
 
     # Baseline compatibility
     BASELINE_PATH_REMOVED = "BASELINE_PATH_REMOVED"
+    BASELINE_PATH_ADDED = "BASELINE_PATH_ADDED"
     BASELINE_OPERATION_REMOVED = "BASELINE_OPERATION_REMOVED"
+    BASELINE_OPERATION_ADDED = "BASELINE_OPERATION_ADDED"
     BASELINE_REQUEST_REQUIREMENT_ADDED = "BASELINE_REQUEST_REQUIREMENT_ADDED"
+    BASELINE_REQUEST_PROPERTY_ADDED = "BASELINE_REQUEST_PROPERTY_ADDED"
     BASELINE_RESPONSE_PROPERTY_REMOVED = "BASELINE_RESPONSE_PROPERTY_REMOVED"
+    BASELINE_RESPONSE_PROPERTY_ADDED = "BASELINE_RESPONSE_PROPERTY_ADDED"
     BASELINE_SCHEMA_TYPE_CHANGED = "BASELINE_SCHEMA_TYPE_CHANGED"
+    BASELINE_PROPERTY_ADDED = "BASELINE_PROPERTY_ADDED"
     UNCLASSIFIED_CHANGE = "UNCLASSIFIED_CHANGE"
 
     # Safety and transport
@@ -387,6 +392,85 @@ class InspectionReport:
             "errors": list(self.errors),
             "coverage_gaps": list(self.coverage_gaps),
             "unsupported_constructs": list(self.unsupported_constructs),
+        }
+
+
+class ChangeClassification(str, Enum):
+    """Compatibility classification from the perspective of existing consumers."""
+
+    BREAKING = "breaking"
+    POTENTIALLY_BREAKING = "potentially_breaking"
+    NON_BREAKING = "non_breaking"
+    UNCLASSIFIED = "unclassified"
+
+
+@dataclass(frozen=True, slots=True)
+class CompatibilityFinding:
+    """One classified difference between a baseline and a candidate contract."""
+
+    code: FindingCode
+    classification: ChangeClassification
+    severity: Severity
+    message: str
+    method: str | None = None
+    path: str | None = None
+    operation_id: str | None = None
+    json_pointer: str | None = None
+    old_value: str | None = None
+    new_value: str | None = None
+    rationale: str | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "code": self.code.value,
+            "classification": self.classification.value,
+            "severity": self.severity.value,
+            "message": self.message,
+        }
+        for name in (
+            "method",
+            "path",
+            "operation_id",
+            "json_pointer",
+            "old_value",
+            "new_value",
+            "rationale",
+        ):
+            value = getattr(self, name)
+            if value is not None:
+                payload[name] = value
+        return payload
+
+
+@dataclass(frozen=True, slots=True)
+class CompatibilityReport:
+    """Result of comparing a candidate contract with an approved baseline."""
+
+    service_id: str
+    baseline_id: str
+    baseline_sha256: str
+    candidate_sha256: str
+    ruleset_version: str
+    breaking_count: int
+    potentially_breaking_count: int
+    non_breaking_count: int
+    unclassified_count: int
+    findings: tuple[CompatibilityFinding, ...] = ()
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "service_id": self.service_id,
+            "baseline_id": self.baseline_id,
+            "baseline_sha256": self.baseline_sha256,
+            "candidate_sha256": self.candidate_sha256,
+            "ruleset_version": self.ruleset_version,
+            "summary": {
+                "breaking": self.breaking_count,
+                "potentially_breaking": self.potentially_breaking_count,
+                "non_breaking": self.non_breaking_count,
+                "unclassified": self.unclassified_count,
+            },
+            "findings": [finding.to_dict() for finding in self.findings],
         }
 
 
