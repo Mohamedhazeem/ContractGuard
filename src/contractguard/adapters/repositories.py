@@ -30,11 +30,14 @@ class SqliteServiceRepository:
         self._connection = connection
 
     def get(self, service_id: str) -> ServiceRegistration | None:
-        row = self._connection.execute(
-            "SELECT service_id, spec_path, base_url, environment, created_at, updated_at "
-            "FROM services WHERE service_id = ?",
-            (service_id,),
-        ).fetchone()
+        try:
+            row = self._connection.execute(
+                "SELECT service_id, spec_path, base_url, environment, created_at, updated_at "
+                "FROM services WHERE service_id = ?",
+                (service_id,),
+            ).fetchone()
+        except sqlite3.Error as exc:
+            raise StorageError("Could not read the service registration.") from exc
         if row is None:
             return None
         return ServiceRegistration(
@@ -82,30 +85,39 @@ class SqliteBaselineRepository:
         self._connection = connection
 
     def current(self, service_id: str) -> Baseline | None:
-        row = self._connection.execute(
-            "SELECT baseline_id, service_id, version_label, spec_sha256, spec_json, "
-            "parent_baseline_id, promoted_at, is_current "
-            "FROM baselines WHERE service_id = ? AND is_current = 1",
-            (service_id,),
-        ).fetchone()
+        try:
+            row = self._connection.execute(
+                "SELECT baseline_id, service_id, version_label, spec_sha256, spec_json, "
+                "parent_baseline_id, promoted_at, is_current "
+                "FROM baselines WHERE service_id = ? AND is_current = 1",
+                (service_id,),
+            ).fetchone()
+        except sqlite3.Error as exc:
+            raise StorageError("Could not read the current baseline.") from exc
         return _row_to_baseline(row) if row is not None else None
 
     def get(self, baseline_id: str) -> Baseline | None:
-        row = self._connection.execute(
-            "SELECT baseline_id, service_id, version_label, spec_sha256, spec_json, "
-            "parent_baseline_id, promoted_at, is_current "
-            "FROM baselines WHERE baseline_id = ?",
-            (baseline_id,),
-        ).fetchone()
+        try:
+            row = self._connection.execute(
+                "SELECT baseline_id, service_id, version_label, spec_sha256, spec_json, "
+                "parent_baseline_id, promoted_at, is_current "
+                "FROM baselines WHERE baseline_id = ?",
+                (baseline_id,),
+            ).fetchone()
+        except sqlite3.Error as exc:
+            raise StorageError("Could not read the baseline.") from exc
         return _row_to_baseline(row) if row is not None else None
 
     def versions(self, service_id: str, *, limit: int) -> list[Baseline]:
-        rows = self._connection.execute(
-            "SELECT baseline_id, service_id, version_label, spec_sha256, spec_json, "
-            "parent_baseline_id, promoted_at, is_current "
-            "FROM baselines WHERE service_id = ? ORDER BY promoted_at DESC LIMIT ?",
-            (service_id, limit),
-        ).fetchall()
+        try:
+            rows = self._connection.execute(
+                "SELECT baseline_id, service_id, version_label, spec_sha256, spec_json, "
+                "parent_baseline_id, promoted_at, is_current "
+                "FROM baselines WHERE service_id = ? ORDER BY promoted_at DESC LIMIT ?",
+                (service_id, limit),
+            ).fetchall()
+        except sqlite3.Error as exc:
+            raise StorageError("Could not read baseline history.") from exc
         return [_row_to_baseline(row) for row in rows]
 
     def add(self, baseline: Baseline) -> Baseline:
