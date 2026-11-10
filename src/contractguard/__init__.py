@@ -7,6 +7,7 @@ __version__ = "0.1.0"
 from typing import Any
 
 from .hooks.pre_tool_call import require_promotion_approval
+from .hooks.pre_verify import pre_verify_nudge
 from .tools.diff import diff_contract_tool as _diff_handler
 from .tools.inspect import inspect as _inspect_handler
 from .tools.ping import ping as _ping_handler
@@ -62,4 +63,5 @@ def register(ctx: Any) -> None:
         handler=_promote_handler,
     )
     ctx.register_hook("pre_tool_call", require_promotion_approval)
+    ctx.register_hook("pre_verify", pre_verify_nudge)
     _ = ctx

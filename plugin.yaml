@@ -21,3 +21,4 @@ provides_tools:
   - contractguard_promote_baseline
 provides_hooks:
   - pre_tool_call
+  - pre_verify
