@@ -113,6 +113,10 @@ pretty = true
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
+module = ["openapi_core.*", "httpx.*", "yaml.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 # Hermes is the host runtime, not a package dependency. Adapters import its
 # documented storage helpers lazily; tests and standalone analysis may not have
 # the Hermes source tree on their path.

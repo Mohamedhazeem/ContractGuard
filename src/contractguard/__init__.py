@@ -29,22 +29,21 @@ __version__ = "0.1.0"
 __all__ = ["__version__", "register"]
 
 
+from .tools.ping import ping as _ping_handler
+from .tools.schemas import PING
+
+
 def register(ctx: Any) -> None:
     """Register ContractGuard tools and hooks with Hermes.
 
-    Stage 0 scaffold: no tools or hooks are registered yet, so ``plugin.yaml``
-    declares empty ``provides_tools`` and ``provides_hooks`` lists. When a tool
-    is implemented, register it here **and** add its name to the manifest in the
-    same change.
-
-    Args:
-        ctx: The Hermes ``PluginContext`` supplied by the plugin loader. Only
-            documented methods such as ``ctx.register_tool`` and
-            ``ctx.register_hook`` may be used.
-
-    Returns:
-        None.
+    Slice 0 registers a single health-check tool so the Hermes plugin skeleton,
+    manifest, and registration path can be validated end to end. No validation,
+    storage, or network work happens here.
     """
-    # Intentionally empty during the scaffold stage. Registration must not
-    # perform network, filesystem, or database work.
+    ctx.register_tool(
+        name="contractguard_ping",
+        toolset="contractguard",
+        schema=PING,
+        handler=_ping_handler,
+    )
     _ = ctx

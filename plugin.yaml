@@ -11,5 +11,6 @@ name: contractguard
 version: "0.1.0"
 description: "Hermes-native OpenAPI request preflight, live response verification, and contract drift evidence"
 license: MIT
-provides_tools: []
+provides_tools:
+  - contractguard_ping
 provides_hooks: []
