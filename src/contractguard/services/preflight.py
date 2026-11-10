@@ -297,7 +297,7 @@ def run_preflight(
         content_type=selected_content_type,
     )
 
-    openapi = make_openapi(loaded.document)
+    openapi = make_openapi(loaded.document, base_url=service.base_url)
     errors = validate_request(openapi, request)
     violations = _normalize_request_errors(errors, operation_id=operation_id)
 

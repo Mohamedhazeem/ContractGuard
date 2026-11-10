@@ -16,6 +16,7 @@ provides_tools:
   - contractguard_inspect
   - contractguard_register
   - contractguard_validate_request
+  - contractguard_test
   - contractguard_promote_baseline
 provides_hooks:
   - pre_tool_call

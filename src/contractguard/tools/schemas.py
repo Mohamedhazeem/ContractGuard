@@ -22,7 +22,7 @@ INSPECT = {
             "spec_path": {
                 "type": "string",
                 "description": "Path to a local JSON or YAML OpenAPI document.",
-            },
+            }
         },
         "required": ["spec_path"],
         "additionalProperties": False,
@@ -47,10 +47,7 @@ REGISTER = {
 
 VALIDATE_REQUEST = {
     "name": "contractguard_validate_request",
-    "description": (
-        "Validate a proposed request against an OpenAPI operation without sending "
-        "it. Always reports request_sent=false."
-    ),
+    "description": "Validate a proposed request against an OpenAPI operation without sending it.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -61,6 +58,23 @@ VALIDATE_REQUEST = {
             "headers": {"type": "object"},
             "content_type": {"type": "string"},
             "body": {},
+        },
+        "required": ["service_id", "operation_id"],
+        "additionalProperties": False,
+    },
+}
+
+TEST = {
+    "name": "contractguard_test",
+    "description": "Execute a bounded live GET/HEAD request and validate the actual response.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "service_id": {"type": "string"},
+            "operation_id": {"type": "string"},
+            "path_params": {"type": "object"},
+            "query_params": {"type": "object"},
+            "max_response_bytes": {"type": "integer"},
         },
         "required": ["service_id", "operation_id"],
         "additionalProperties": False,

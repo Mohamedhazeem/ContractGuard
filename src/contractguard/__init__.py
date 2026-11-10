@@ -11,7 +11,8 @@ from .tools.inspect import inspect as _inspect_handler
 from .tools.ping import ping as _ping_handler
 from .tools.promote import promote_baseline as _promote_handler
 from .tools.register import register as _register_handler
-from .tools.schemas import INSPECT, PING, PROMOTE, REGISTER, VALIDATE_REQUEST
+from .tools.schemas import INSPECT, PING, PROMOTE, REGISTER, TEST, VALIDATE_REQUEST
+from .tools.test_api import test_api as _test_handler
 from .tools.validate_request import validate_request as _validate_request_handler
 
 
@@ -40,6 +41,12 @@ def register(ctx: Any) -> None:
         toolset="contractguard",
         schema=VALIDATE_REQUEST,
         handler=_validate_request_handler,
+    )
+    ctx.register_tool(
+        name="contractguard_test",
+        toolset="contractguard",
+        schema=TEST,
+        handler=_test_handler,
     )
     ctx.register_tool(
         name="contractguard_promote_baseline",

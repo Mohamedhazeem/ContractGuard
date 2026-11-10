@@ -40,19 +40,18 @@ class _NoOpCastersFactory:
         return _NoOpCaster()
 
 
-def make_openapi(spec: Mapping[str, Any]) -> OpenAPI:
+def make_openapi(spec: Mapping[str, Any], *, base_url: str | None = None) -> OpenAPI:
     """Build an ``OpenAPI`` instance with casting disabled.
 
-    Args:
-        spec: Parsed OpenAPI document as a mapping.
-
-    Returns:
-        A configured ``OpenAPI`` application.
-
-    Raises:
-        ValueError: If the document is not a supported OpenAPI specification.
+    When ``base_url`` is provided, the spec's ``servers`` block is replaced
+    with that URL so validation targets the registered service rather than
+    trusting a server URL embedded in the document.
     """
     from openapi_core import Config, OpenAPI
+
+    if base_url:
+        spec = dict(spec)
+        spec["servers"] = [{"url": base_url.rstrip("/")}]
 
     return OpenAPI.from_dict(
         cast(Any, spec),
