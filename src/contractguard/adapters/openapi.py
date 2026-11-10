@@ -14,10 +14,10 @@ casting keeps the validator honest: a string is a string.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
-from openapi_core import Config, OpenAPI
-from openapi_core.datatypes import RequestParameters
+if TYPE_CHECKING:
+    from openapi_core import OpenAPI
 
 
 class _NoOpCaster:
@@ -52,6 +52,8 @@ def make_openapi(spec: Mapping[str, Any]) -> OpenAPI:
     Raises:
         ValueError: If the document is not a supported OpenAPI specification.
     """
+    from openapi_core import Config, OpenAPI
+
     return OpenAPI.from_dict(
         cast(Any, spec),
         config=Config(schema_casters_factory=cast(Any, _NoOpCastersFactory())),
@@ -68,7 +70,7 @@ class OpenApiRequestAdapter:
         host_url: str,
         path: str,
         full_url_pattern: str,
-        parameters: RequestParameters | None = None,
+        parameters: Any = None,
         body: bytes | None = None,
         content_type: str = "",
     ) -> None:
@@ -85,7 +87,14 @@ class OpenApiRequestAdapter:
         self._host_url = host_url
         self._path = path
         self._full_url_pattern = full_url_pattern
-        self.parameters = parameters if parameters is not None else RequestParameters()
+        if parameters is None:
+            try:
+                from openapi_core.datatypes import RequestParameters
+            except ImportError as exc:
+                raise RuntimeError("openapi_core is required") from exc
+            self.parameters = RequestParameters()
+        else:
+            self.parameters = parameters
         self._body = body
         self._content_type = content_type.lower()
 

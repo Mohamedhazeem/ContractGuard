@@ -4,9 +4,7 @@ from __future__ import annotations
 
 PING = {
     "name": "contractguard_ping",
-    "description": (
-        "Health check for the ContractGuard plugin. Returns the plugin name and version."
-    ),
+    "description": "Health check for the ContractGuard plugin.",
     "parameters": {
         "type": "object",
         "properties": {},
@@ -17,16 +15,14 @@ PING = {
 
 INSPECT = {
     "name": "contractguard_inspect",
-    "description": ("Load and validate a local OpenAPI document without making network requests."),
+    "description": "Load and validate a local OpenAPI document without making network requests.",
     "parameters": {
         "type": "object",
         "properties": {
             "spec_path": {
                 "type": "string",
-                "description": (
-                    "Absolute or relative path to a local JSON or YAML OpenAPI document."
-                ),
-            }
+                "description": "Path to a local JSON or YAML OpenAPI document.",
+            },
         },
         "required": ["spec_path"],
         "additionalProperties": False,
@@ -35,45 +31,51 @@ INSPECT = {
 
 REGISTER = {
     "name": "contractguard_register",
-    "description": (
-        "Register a service with an explicit base URL and OpenAPI spec. Validates "
-        "the spec before storing anything. Stores the current spec as a candidate "
-        "baseline; it does not approve it."
-    ),
+    "description": "Register a service with an explicit base URL and OpenAPI spec.",
     "parameters": {
         "type": "object",
         "properties": {
-            "service_id": {"type": "string", "description": "Lowercase slug for the service."},
-            "spec_path": {"type": "string", "description": "Path to the OpenAPI document."},
-            "base_url": {
-                "type": "string",
-                "description": "Explicit loopback base URL, e.g. http://127.0.0.1:8000.",
-            },
-            "environment": {
-                "type": "string",
-                "description": "Environment label. Defaults to local-development.",
-            },
+            "service_id": {"type": "string"},
+            "spec_path": {"type": "string"},
+            "base_url": {"type": "string"},
+            "environment": {"type": "string"},
         },
         "required": ["service_id", "spec_path", "base_url"],
         "additionalProperties": False,
     },
 }
 
-PROMOTE = {
-    "name": "contractguard_promote_baseline",
+VALIDATE_REQUEST = {
+    "name": "contractguard_validate_request",
     "description": (
-        "Promote an exact candidate spec hash to the approved baseline. Requires "
-        "human approval through the pre_tool_call hook."
+        "Validate a proposed request against an OpenAPI operation without sending "
+        "it. Always reports request_sent=false."
     ),
     "parameters": {
         "type": "object",
         "properties": {
             "service_id": {"type": "string"},
+            "operation_id": {"type": "string"},
+            "path_params": {"type": "object"},
+            "query_params": {"type": "object"},
+            "headers": {"type": "object"},
+            "content_type": {"type": "string"},
+            "body": {},
+        },
+        "required": ["service_id", "operation_id"],
+        "additionalProperties": False,
+    },
+}
+
+PROMOTE = {
+    "name": "contractguard_promote_baseline",
+    "description": "Promote an exact candidate spec hash to the approved baseline.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "service_id": {"type": "string"},
             "candidate_spec_path": {"type": "string"},
-            "candidate_sha256": {
-                "type": "string",
-                "description": "Exact 64-character SHA-256 of the candidate.",
-            },
+            "candidate_sha256": {"type": "string"},
             "version_label": {"type": "string"},
             "reason": {"type": "string"},
         },

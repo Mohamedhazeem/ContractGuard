@@ -324,6 +324,27 @@ def _report(
     )
 
 
+def resolve_operation(
+    document: Mapping[str, Any], operation_id: str
+) -> tuple[str, str, dict[str, Any]] | None:
+    """Resolve an operation by ID.
+
+    Returns ``(method, path_template, operation)`` or ``None`` when not found.
+    """
+    paths = document.get("paths")
+    if not isinstance(paths, dict):
+        return None
+    methods = ("get", "put", "post", "delete", "options", "head", "patch", "trace")
+    for path, path_item in paths.items():
+        if not isinstance(path_item, dict):
+            continue
+        for method in methods:
+            operation = path_item.get(method)
+            if isinstance(operation, dict) and operation.get("operationId") == operation_id:
+                return method.upper(), str(path), operation
+    return None
+
+
 def _external_refs(obj: Any, found: set[str] | None = None) -> set[str]:
     if found is None:
         found = set()
