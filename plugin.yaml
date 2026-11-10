@@ -1,0 +1,15 @@
+# ContractGuard native Hermes plugin manifest.
+#
+# Hermes loads this directory as `hermes_plugins.<slug>` and calls the
+# `register(ctx)` function in the adjacent `__init__.py`.
+#
+# IMPORTANT: `provides_tools` and `provides_hooks` must list every tool and hook
+# that `register(ctx)` actually registers. They are intentionally empty during
+# Stage 0 (scaffolding only). Add names here in the same change that registers
+# them, or `hermes plugins validate` will fail the manifest-parity check.
+name: contractguard
+version: "0.1.0"
+description: "Hermes-native OpenAPI request preflight, live response verification, and contract drift evidence"
+license: MIT
+provides_tools: []
+provides_hooks: []
