@@ -280,7 +280,7 @@ Requirements and steps:
 ### 1. Clone and install
 
 ```bash
-git clone <REPO_URL> contractguard
+git clone https://github.com/Mohamedhazeem/ContractGuard.git contractguard
 cd contractguard
 
 uv venv .venv
