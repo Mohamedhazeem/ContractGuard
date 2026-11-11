@@ -12,7 +12,7 @@
 
 name: contractguard
 repo: https://github.com/Mohamedhazeem/ContractGuard
-sha: "48b97cf71adf0ccb12e5f3e9095f03f9e911626f"
+sha: "c7ed5549c026e9b7420aea613ecc4f7aa4135e10"
 description: >-
   Hermes-native API contract assurance: validates proposed requests before they
   are sent, verifies live responses even when the status code is 200, compares
