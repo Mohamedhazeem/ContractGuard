@@ -38,6 +38,7 @@ class PreflightResult:
     operation_id: str
     method: str
     path: str
+    spec_sha256: str = ""
     request_sent: bool = False
     violations: list[dict[str, Any]] = field(default_factory=list)
 
@@ -48,6 +49,7 @@ class PreflightResult:
             "operation_id": self.operation_id,
             "method": self.method,
             "path": self.path,
+            "spec_sha256": self.spec_sha256,
             "request_sent": self.request_sent,
             "violations": self.violations,
         }
@@ -184,6 +186,7 @@ def run_preflight(
         raise IncompleteInputError(f"Service {service_id!r} is not registered.")
 
     loaded = loader.load_file(Path(service.spec_path))
+    sha = loaded.snapshot.sha256
     resolved = resolve_operation(loaded.document, operation_id)
     if resolved is None:
         raise IncompleteInputError(f"Operation {operation_id!r} was not found in the spec.")
@@ -250,6 +253,7 @@ def run_preflight(
             operation_id=operation_id,
             method=method,
             path=path_template,
+            spec_sha256=sha,
             violations=[violation],
         )
 
@@ -308,5 +312,6 @@ def run_preflight(
         operation_id=operation_id,
         method=method,
         path=path_template,
+        spec_sha256=sha,
         violations=violations,
     )

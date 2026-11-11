@@ -41,6 +41,7 @@ class LiveTestResult:
     operation_id: str
     method: str
     path: str
+    spec_sha256: str = ""
     request_sent: bool = False
     status_code: int | None = None
     content_type: str | None = None
@@ -55,6 +56,7 @@ class LiveTestResult:
             "operation_id": self.operation_id,
             "method": self.method,
             "path": self.path,
+            "spec_sha256": self.spec_sha256,
             "request_sent": self.request_sent,
             "status_code": self.status_code,
             "content_type": self.content_type,
@@ -170,6 +172,7 @@ def run_live_test(
             operation_id=operation_id,
             method=method,
             path=path_template,
+            spec_sha256=loaded.snapshot.sha256,
             request_sent=False,
             violations=[
                 {
@@ -223,6 +226,7 @@ def run_live_test(
             operation_id=operation_id,
             method=method,
             path=path_template,
+            spec_sha256=loaded.snapshot.sha256,
             request_sent=False,
             violations=violations,
         )
@@ -247,6 +251,7 @@ def run_live_test(
             operation_id=operation_id,
             method=method,
             path=path_template,
+            spec_sha256=loaded.snapshot.sha256,
             request_sent=True,
             status_code=response.status_code,
             content_type=content_type or None,
@@ -273,6 +278,7 @@ def run_live_test(
         operation_id=operation_id,
         method=method,
         path=path_template,
+        spec_sha256=loaded.snapshot.sha256,
         request_sent=True,
         status_code=response.status_code,
         content_type=content_type or None,

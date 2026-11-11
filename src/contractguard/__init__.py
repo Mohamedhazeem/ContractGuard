@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
-
 from typing import Any
 
 from .hooks.pre_tool_call import require_promotion_approval
 from .hooks.pre_verify import pre_verify_nudge
 from .tools.diff import diff_contract_tool as _diff_handler
+from .tools.history import history as _history_handler
 from .tools.inspect import inspect as _inspect_handler
 from .tools.ping import ping as _ping_handler
 from .tools.promote import promote_baseline as _promote_handler
 from .tools.register import register as _register_handler
-from .tools.schemas import DIFF, INSPECT, PING, PROMOTE, REGISTER, TEST, VALIDATE_REQUEST
+from .tools.schemas import DIFF, HISTORY, INSPECT, PING, PROMOTE, REGISTER, TEST, VALIDATE_REQUEST
 from .tools.test_api import test_api as _test_handler
 from .tools.validate_request import validate_request as _validate_request_handler
+from .version import __version__ as __version__
 
 
 def register(ctx: Any) -> None:
@@ -55,6 +55,12 @@ def register(ctx: Any) -> None:
         toolset="contractguard",
         schema=DIFF,
         handler=_diff_handler,
+    )
+    ctx.register_tool(
+        name="contractguard_history",
+        toolset="contractguard",
+        schema=HISTORY,
+        handler=_history_handler,
     )
     ctx.register_tool(
         name="contractguard_promote_baseline",

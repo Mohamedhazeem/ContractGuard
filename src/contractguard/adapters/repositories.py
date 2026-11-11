@@ -6,13 +6,24 @@ all SQL details out of the service layer.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import uuid
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Any
 
 from ..domain.errors import StorageError
-from ..domain.models import Baseline, ServiceRegistration
+from ..domain.models import (
+    Baseline,
+    Coverage,
+    EvidenceReceipt,
+    Finding,
+    RunType,
+    ServiceRegistration,
+    Verdict,
+)
+from ..version import __version__
 
 
 def _parse_datetime(value: str) -> datetime:
@@ -201,3 +212,129 @@ def _row_to_baseline(row: Any) -> Baseline:
 def new_baseline_id() -> str:
     """Generate a unique baseline identifier."""
     return "bl_" + uuid.uuid4().hex
+
+
+class SqliteRunRepository:
+    """Repository for evidence receipts and their redacted findings."""
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        connection.row_factory = sqlite3.Row
+        self._connection = connection
+
+    def record(self, receipt: EvidenceReceipt, findings: Sequence[Finding]) -> tuple[str, ...]:
+        """Persist one receipt and its findings in a single transaction.
+
+        Returns:
+            The identifiers of the stored findings.
+        """
+        finding_ids: list[str] = []
+        try:
+            with self._connection:
+                self._connection.execute(
+                    """
+                    INSERT INTO runs (
+                        run_id, service_id, operation_id, run_type, spec_sha256,
+                        verdict, coverage_json, started_at, duration_ms, plugin_version
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        receipt.run_id,
+                        receipt.service_id,
+                        receipt.operation_id,
+                        receipt.run_type.value,
+                        receipt.spec_sha256,
+                        receipt.verdict.value,
+                        json.dumps(
+                            {
+                                "executed": receipt.coverage.executed,
+                                "skipped": receipt.coverage.skipped,
+                                "unsupported": receipt.coverage.unsupported,
+                            },
+                            separators=(",", ":"),
+                        ),
+                        receipt.started_at.isoformat(),
+                        receipt.duration_ms,
+                        __version__,
+                    ),
+                )
+                for finding in findings:
+                    finding_id = "fnd_" + uuid.uuid4().hex
+                    finding_ids.append(finding_id)
+                    self._connection.execute(
+                        """
+                        INSERT INTO findings (
+                            finding_id, run_id, severity, code, operation_id,
+                            json_pointer, details_json
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            finding_id,
+                            receipt.run_id,
+                            finding.severity.value,
+                            finding.code.value,
+                            finding.operation_id,
+                            finding.json_pointer,
+                            json.dumps(
+                                {
+                                    "message": finding.message,
+                                    "direction": (
+                                        finding.direction.value if finding.direction else None
+                                    ),
+                                    "expected": finding.expected,
+                                    "actual": finding.actual,
+                                },
+                                separators=(",", ":"),
+                                sort_keys=True,
+                            ),
+                        ),
+                    )
+        except sqlite3.Error as exc:
+            raise StorageError("Could not record the evidence receipt.") from exc
+        return tuple(finding_ids)
+
+    def recent(self, service_id: str, *, limit: int) -> list[EvidenceReceipt]:
+        """Return recent receipts, newest first, bounded by ``limit``."""
+        try:
+            rows = self._connection.execute(
+                "SELECT run_id, service_id, operation_id, run_type, spec_sha256, verdict, "
+                "coverage_json, started_at, duration_ms FROM runs "
+                "WHERE service_id = ? ORDER BY started_at DESC LIMIT ?",
+                (service_id, limit),
+            ).fetchall()
+        except sqlite3.Error as exc:
+            raise StorageError("Could not read the evidence history.") from exc
+
+        receipts: list[EvidenceReceipt] = []
+        for row in rows:
+            coverage = _coverage_from_json(row["coverage_json"])
+            receipts.append(
+                EvidenceReceipt(
+                    run_id=row["run_id"],
+                    service_id=row["service_id"],
+                    run_type=RunType(row["run_type"]),
+                    verdict=Verdict(row["verdict"]),
+                    spec_sha256=row["spec_sha256"],
+                    started_at=_parse_datetime(row["started_at"]),
+                    duration_ms=row["duration_ms"] or 0,
+                    operation_id=row["operation_id"],
+                    finding_ids=tuple(self._finding_ids(row["run_id"])),
+                    coverage=coverage,
+                )
+            )
+        return receipts
+
+    def _finding_ids(self, run_id: str) -> list[str]:
+        rows = self._connection.execute(
+            "SELECT finding_id FROM findings WHERE run_id = ? ORDER BY finding_id",
+            (run_id,),
+        ).fetchall()
+        return [row["finding_id"] for row in rows]
+
+
+def _coverage_from_json(raw: str) -> Coverage:
+    data = json.loads(raw) if raw else {}
+    return Coverage(
+        executed=int(data.get("executed", 0)),
+        skipped=int(data.get("skipped", 0)),
+        unsupported=int(data.get("unsupported", 0)),
+    )

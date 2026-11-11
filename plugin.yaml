@@ -4,13 +4,29 @@
 # `register(ctx)` function in the adjacent `__init__.py`.
 #
 # IMPORTANT: `provides_tools` and `provides_hooks` must list every tool and hook
-# that `register(ctx)` actually registers. They are intentionally empty during
-# Stage 0 (scaffolding only). Add names here in the same change that registers
-# them, or `hermes plugins validate` will fail the manifest-parity check.
+# that `register(ctx)` actually registers. `hermes plugins validate` fails the
+# manifest-parity check when they drift apart, and the catalog entry repeats
+# this list under `capabilities:`.
 name: contractguard
-version: "0.1.0"
+version: "0.2.0"
 description: "Hermes-native OpenAPI request preflight, live response verification, and contract drift evidence"
 license: MIT
+author: "ContractGuard contributors"
+homepage: "https://github.com/Mohamedhazeem/contractguard"
+tags:
+  - openapi
+  - api-contracts
+  - contract-testing
+  - developer-tools
+  - quality
+
+# Truthful compatibility floor: the plugin uses `ctx.register_tool`,
+# `ctx.register_hook`, the `pre_verify` hook, and `plugins.plugin_storage`'s
+# `plugin_db`/`plugin_data_dir`. The pre_verify hook and the plugin-storage
+# helpers are both present from Hermes 0.21.6 onward, and the manifest's own
+# `requires_hermes` field is honoured from that release on.
+requires_hermes: ">=0.21.6"
+
 provides_tools:
   - contractguard_ping
   - contractguard_inspect
@@ -18,6 +34,7 @@ provides_tools:
   - contractguard_validate_request
   - contractguard_test
   - contractguard_diff
+  - contractguard_history
   - contractguard_promote_baseline
 provides_hooks:
   - pre_tool_call

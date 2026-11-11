@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        # Release-age quarantine: the plugin owns its dependency policy, so the
+        # lock resolves against releases at least 3 days old. Hermes applies the
+        # same window to its own dependencies; mirroring it here keeps a
+        # freshly-published release from reaching a user through this plugin.
+        run: |
+          uv pip install --system --exclude-newer "3 days" \
+            "pytest>=8.2,<10" "ruff>=0.6,<1" "mypy>=1.11,<3" "PyYAML>=6.0.1,<7" \
+            "openapi-core>=0.23,<0.24" "openapi-spec-validator>=0.8.5,<0.9" \
+            "httpx>=0.27,<0.29"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Format check
+        run: ruff format --check .
+
+      - name: Type check
+        run: mypy
+
+      - name: Test
+        run: pytest -q
+
+  hermes-plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install Hermes
+        run: |
+          uv tool install "hermes-agent" --exclude-newer "3 days" || \
+          pip install --upgrade "hermes-agent"
+
+      - name: Plugin doctor
+        run: hermes plugins doctor . --ci
+
+      - name: Plugin validate
+        run: hermes plugins validate . --install-deps

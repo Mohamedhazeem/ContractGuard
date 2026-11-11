@@ -6,11 +6,14 @@ import json
 import logging
 from typing import Any
 
-from ..adapters.repositories import SqliteBaselineRepository
+from ..adapters.clock import UtcClock
+from ..adapters.repositories import SqliteBaselineRepository, SqliteRunRepository
 from ..adapters.spec_loader import SpecLoader
 from ..config import Settings
 from ..domain.errors import ContractGuardError
+from ..domain.models import Coverage, RunType, Verdict
 from ..services.diff import diff_contract
+from ..services.evidence import record_run
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +35,32 @@ def diff_contract_tool(args: dict[str, Any], **kwargs: Any) -> str:
         connection = open_plugin_database()
         try:
             baseline_repository = SqliteBaselineRepository(connection)
+            run_repository = SqliteRunRepository(connection)
             loader = SpecLoader(max_spec_bytes=settings.max_spec_bytes)
+            started_at = UtcClock().now()
             report = diff_contract(
                 baseline_repository=baseline_repository,
                 loader=loader,
                 service_id=service_id,
                 candidate_spec_path=candidate_spec_path,
             )
-            return json.dumps(report.to_dict(), separators=(",", ":"))
+            violations = [finding.to_dict() for finding in report.findings]
+            verdict = Verdict.FAIL if report.breaking_count else Verdict.PASS
+            receipt = record_run(
+                run_repository=run_repository,
+                service_id=service_id,
+                run_type=RunType.DIFF,
+                verdict=verdict,
+                spec_sha256=report.candidate_sha256,
+                started_at=started_at,
+                duration_ms=0,
+                operation_id=None,
+                violations=violations,
+                coverage=Coverage(executed=1),
+            )
+            payload = report.to_dict()
+            payload["run_id"] = receipt.run_id
+            return json.dumps(payload, separators=(",", ":"))
         finally:
             connection.close()
     except ContractGuardError as exc:

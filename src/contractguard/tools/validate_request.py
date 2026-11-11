@@ -6,10 +6,13 @@ import json
 import logging
 from typing import Any
 
-from ..adapters.repositories import SqliteServiceRepository
+from ..adapters.clock import UtcClock
+from ..adapters.repositories import SqliteRunRepository, SqliteServiceRepository
 from ..adapters.spec_loader import SpecLoader
 from ..config import Settings
 from ..domain.errors import ContractGuardError
+from ..domain.models import Coverage, RunType, Verdict
+from ..services.evidence import record_run
 from ..services.preflight import run_preflight
 
 logger = logging.getLogger(__name__)
@@ -46,7 +49,9 @@ def validate_request(args: dict[str, Any], **kwargs: Any) -> str:
         connection = open_plugin_database()
         try:
             service_repository = SqliteServiceRepository(connection)
+            run_repository = SqliteRunRepository(connection)
             loader = SpecLoader(max_spec_bytes=settings.max_spec_bytes)
+            started_at = UtcClock().now()
             result = run_preflight(
                 loader=loader,
                 service_repository=service_repository,
@@ -59,7 +64,21 @@ def validate_request(args: dict[str, Any], **kwargs: Any) -> str:
                 content_type=content_type,
                 max_body_bytes=settings.max_request_body_bytes,
             )
-            return json.dumps(result.to_dict(), separators=(",", ":"))
+            receipt = record_run(
+                run_repository=run_repository,
+                service_id=service_id,
+                run_type=RunType.PREFLIGHT,
+                verdict=Verdict(result.verdict),
+                spec_sha256=result.spec_sha256,
+                started_at=started_at,
+                duration_ms=0,
+                operation_id=operation_id,
+                violations=result.violations,
+                coverage=Coverage(executed=1),
+            )
+            payload = result.to_dict()
+            payload["run_id"] = receipt.run_id
+            return json.dumps(payload, separators=(",", ":"))
         finally:
             connection.close()
     except ContractGuardError as exc:

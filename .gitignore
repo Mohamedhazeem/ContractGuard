@@ -62,3 +62,6 @@ demo/.state/
 .DS_Store
 Thumbs.db
 docs/plan
+
+# Submission scratch
+submission/*.local.yaml

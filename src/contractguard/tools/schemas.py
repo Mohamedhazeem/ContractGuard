@@ -95,6 +95,20 @@ DIFF = {
     },
 }
 
+HISTORY = {
+    "name": "contractguard_history",
+    "description": "Read recent redacted evidence receipts for a registered service.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "service_id": {"type": "string"},
+            "limit": {"type": "integer", "description": "Maximum receipts to return (1-20)."},
+        },
+        "required": ["service_id"],
+        "additionalProperties": False,
+    },
+}
+
 PROMOTE = {
     "name": "contractguard_promote_baseline",
     "description": "Promote an exact candidate spec hash to the approved baseline.",

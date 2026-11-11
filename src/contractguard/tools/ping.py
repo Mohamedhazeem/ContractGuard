@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from .. import __version__
+from ..version import __version__
 
 
 def ping(args: dict[str, Any], **kwargs: Any) -> str:

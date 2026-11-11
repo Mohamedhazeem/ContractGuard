@@ -6,11 +6,14 @@ import json
 import logging
 from typing import Any
 
+from ..adapters.clock import UtcClock
 from ..adapters.http_transport import HttpxTransport
-from ..adapters.repositories import SqliteServiceRepository
+from ..adapters.repositories import SqliteRunRepository, SqliteServiceRepository
 from ..adapters.spec_loader import SpecLoader
 from ..config import Settings
 from ..domain.errors import ContractGuardError
+from ..domain.models import Coverage, RunType, Verdict
+from ..services.evidence import record_run
 from ..services.live_test import run_live_test
 
 logger = logging.getLogger(__name__)
@@ -47,8 +50,10 @@ def test_api(args: dict[str, Any], **kwargs: Any) -> str:
         connection = open_plugin_database()
         try:
             service_repository = SqliteServiceRepository(connection)
+            run_repository = SqliteRunRepository(connection)
             loader = SpecLoader(max_spec_bytes=settings.max_spec_bytes)
             transport = HttpxTransport(max_response_bytes=max_response_bytes)
+            started_at = UtcClock().now()
             result = run_live_test(
                 loader=loader,
                 service_repository=service_repository,
@@ -60,7 +65,24 @@ def test_api(args: dict[str, Any], **kwargs: Any) -> str:
                 timeout_seconds=settings.http_timeout_seconds,
                 max_response_bytes=max_response_bytes,
             )
-            return json.dumps(result.to_dict(), separators=(",", ":"))
+            receipt = record_run(
+                run_repository=run_repository,
+                service_id=service_id,
+                run_type=RunType.LIVE_TEST,
+                verdict=Verdict(result.verdict),
+                spec_sha256=result.spec_sha256,
+                started_at=started_at,
+                duration_ms=result.duration_ms,
+                operation_id=operation_id,
+                violations=result.violations,
+                coverage=Coverage(
+                    executed=1 if result.request_sent else 0,
+                    skipped=0 if result.request_sent else 1,
+                ),
+            )
+            payload = result.to_dict()
+            payload["run_id"] = receipt.run_id
+            return json.dumps(payload, separators=(",", ":"))
         finally:
             connection.close()
     except ContractGuardError as exc:

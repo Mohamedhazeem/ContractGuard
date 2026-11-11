@@ -293,13 +293,17 @@ endpoint.
 
 | Tool | Purpose | Sends HTTP? | Safety boundary |
 |---|---|---:|---|
+| `contractguard_ping` | Health check — plugin name and version | No | No arguments |
 | `contractguard_inspect` | Validate a document and list operations | No | Reads one local file, size-capped, external `$ref` blocked |
 | `contractguard_register` | Register a service, spec, and base URL | No | Validates slug and URL; stores candidate only |
 | `contractguard_validate_request` | Offline request preflight | **No** | Always `request_sent: false`; secret headers rejected |
 | `contractguard_test` | Live response verification | Yes | Loopback only, GET/HEAD only, timeouts, byte cap, no redirects |
 | `contractguard_diff` | Compare candidate vs approved baseline | No | Deterministic ruleset; unsupported edits marked unclassified |
-| `contractguard_promote_baseline` | Approve and store a new baseline | No | Exact SHA-256, human approval, transactional compare-and-swap |
 | `contractguard_history` | Read recent evidence receipts | No | Bounded, redacted, no full bodies |
+| `contractguard_promote_baseline` | Approve and store a new baseline | No | Exact SHA-256, human approval, transactional compare-and-swap |
+
+Every check tool writes a redacted evidence receipt, so `contractguard_history`
+returns what actually ran, against which spec hash, with which verdict.
 
 ### Prompts that work well
 
@@ -459,6 +463,42 @@ writes, follow redirects, or store credentials is a liability, not a guardrail.
 
 ---
 
+## Disclosure
+
+What this plugin does that a user should know before installing it:
+
+- **Network calls.** The plugin makes HTTP requests, but only to a loopback
+  address (`localhost`, `127.0.0.1`, `::1`) that the user registered
+  explicitly, and only with `GET` or `HEAD`. It never contacts a third-party
+  service, an analytics endpoint, or a telemetry backend. There is no telemetry
+  and no usage reporting of any kind.
+- **Reads outside the plugin's own data.** The plugin reads the OpenAPI
+  document at the exact path the user (or the agent on the user's behalf) names
+  in a tool call. That file is parsed, hashed, and copied into the plugin
+  database. It does not scan the project directory, read `.env` files, read
+  `~/.hermes/auth.json`, or read any other credential store.
+- **Writes.** The plugin writes only to the Hermes-managed plugin storage
+  (`plugin_data_dir` / `plugin_db`): service registrations, immutable contract
+  baselines, and redacted evidence receipts. It never writes to the plugin
+  installation directory and never modifies your source code.
+- **Shell commands.** None. The plugin never spawns a subprocess.
+- **Long-running background processes.** None. Every operation is synchronous
+  and bounded; there is no worker, queue, or daemon.
+- **Stored credentials.** None. Credential-bearing headers are rejected from
+  tool arguments and redacted from all output. The plugin never asks for,
+  stores, refreshes, or rotates a credential.
+- **Human approval.** Baseline promotion is gated behind Hermes' approval
+  prompt. The plugin does not auto-approve, disable guards, or spawn children
+  that inherit non-interactive mode. If approval is unavailable (for example in
+  an unattended run), the promotion is declined rather than performed silently.
+- **Dependencies.** `openapi-core`, `openapi-spec-validator`, `httpx`, and
+  `PyYAML` are installed from PyPI under the plugin's own version policy. The
+  plugin does not fetch or execute code at runtime.
+
+Full detail in [`SECURITY.md`](SECURITY.md).
+
+---
+
 ## Configuration
 
 Settings are immutable, validated on construction, and resolved from
@@ -487,7 +527,10 @@ contractguard/
 ├── __init__.py                  # Hermes bootstrap: register(ctx)
 ├── pyproject.toml               # Packaging, dependencies, quality tooling
 ├── LICENSE                      # MIT
+├── SECURITY.md                  # Threat model and disclosure
+├── CHANGELOG.md                 # Release notes
 ├── AGENTS.md                    # Rules for AI coding agents
+├── .github/workflows/ci.yml     # Quality gate + Hermes plugin validation
 ├── docs/
 │   ├── adr/                     # Architecture Decision Records
 │   └── plan/                    # Product specification
@@ -503,6 +546,7 @@ contractguard/
 │   ├── unit/
 │   ├── integration/
 │   └── fixtures/openapi/
+├── spikes/                      # One-shot technical spikes (not shipped)
 └── demo/                        # Local walkthrough fixture
 ```
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "contractguard"
-version = "0.1.0"
+version = "0.2.0"
 description = "Hermes-native OpenAPI request preflight, live response verification, and contract drift evidence"
 readme = "README.md"
 # Caret-style "^3.10" expressed per PEP 440: 3.10 or newer, below 4.0.
@@ -33,12 +33,19 @@ classifiers = [
 ]
 dependencies = [
   # Runtime validation for OpenAPI 3.0/3.1/3.2 request and response payloads.
+  # 0.23 is the floor because it is the first release whose OpenAPI loader
+  # accepts an OpenAPI 3.2 document (0.21/0.22 reject 3.2 as "spec not detected").
   "openapi-core>=0.23,<0.24",
   # Independent structural document validation and diagnostics.
-  "openapi-spec-validator>=0.8,<0.9",
+  # 0.8.5 is the floor because openapi-core 0.23 imports
+  # openapi_spec_validator.OpenAPIV32SpecValidator, which only exists from 0.8.2
+  # onwards, and only 0.8.5 accepts the jsonschema>=4.25 line Hermes pins.
+  "openapi-spec-validator>=0.8.5,<0.9",
   # Bounded HTTP transport for live GET/HEAD verification.
+  # Hermes pins httpx==0.28.1, which is inside this range.
   "httpx>=0.27,<0.29",
   # Safe YAML parsing (always yaml.safe_load, never yaml.load).
+  # Hermes pins PyYAML==6.0.3, which is inside this range.
   "PyYAML>=6.0.1,<7",
 ]
 

@@ -223,8 +223,12 @@ class BaselineRepository(Protocol):
 class RunRepository(Protocol):
     """Persistence port for reduced evidence receipts and findings."""
 
-    def record(self, receipt: EvidenceReceipt, findings: Sequence[Finding]) -> None:
-        """Persist one run and its redacted findings in a single transaction."""
+    def record(self, receipt: EvidenceReceipt, findings: Sequence[Finding]) -> tuple[str, ...]:
+        """Persist one run and its redacted findings in a single transaction.
+
+        Returns:
+            The identifiers of the stored findings.
+        """
         ...
 
     def recent(self, service_id: str, *, limit: int) -> Sequence[EvidenceReceipt]:
