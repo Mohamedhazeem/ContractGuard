@@ -155,6 +155,88 @@ Read the decisions behind this design in [`docs/adr/`](docs/adr/).
 
 ---
 
+## How Hermes uses this plugin
+
+Hermes discovers the plugin, reads the tool schemas, and offers them to the
+model like any other tool. The loop is the standard agent tool loop:
+
+```text
+1. DISCOVERY   Hermes loads plugin.yaml, imports the package, calls register(ctx).
+                register() hands Hermes 8 tool schemas + 2 hooks.
+
+2. SCHEMAS     Each schema carries a name, a description, and a JSON Schema for
+                its arguments. This is the ONLY thing the model sees.
+
+3. SELECTION   You ask in plain language. The model matches your request to a
+                schema ("validate a request" -> contractguard_validate_request)
+                and fills the arguments from your message and the files it can
+                read.
+
+4. EXECUTION   Hermes calls the handler. The handler validates arguments,
+                runs one use case, and returns a JSON string.
+
+5. FEEDBACK    That JSON comes back as the tool result. The model reads the
+                verdict and the findings and reports them to you — or acts on
+                them, which is the point.
+```
+
+### Do I need to paste code?
+
+**No.** Natural language is enough. The tool schemas are written for it, and
+each one names its safety boundary so the model picks correctly.
+
+You say this:
+
+```
+Use ContractGuard to validate the request body {"invalid": "json"} against
+operation createProduct. Do not send it.
+```
+
+And the model calls:
+
+```json
+{"tool": "contractguard_validate_request",
+ "args": {"service_id": "giftshop-api", "operation_id": "createProduct",
+          "body": {"invalid": "json"}, "content_type": "application/json"}}
+```
+
+The `service_id` came from the earlier registration step, the `operation_id`
+from your sentence, and the body from your message. **You never write a tool
+call, a JSON payload, or a parameter name by hand.**
+
+Two things to know:
+
+- **You still supply the facts.** Hermes cannot invent your service ID, your
+  base URL, or your payload. ContractGuard reports `INCOMPLETE` with a precise
+  reason when a required input is missing, rather than guessing.
+- **The model chooses the tool, the tool does the verifying.** The plugin never
+  asks a language model whether a schema is valid. OpenAPI-core decides that;
+  the model only chooses when to ask and how to explain the answer.
+
+### What you get back
+
+Every tool returns the same shape, so the output is predictable:
+
+```json
+{
+  "verdict": "FAIL",
+  "operation_id": "getProduct",
+  "method": "GET",
+  "path": "/products/{product_id}",
+  "request_sent": true,
+  "status_code": 200,
+  "content_type": "application/json",
+  "duration_ms": 874,
+  "violations": [
+    {"code": "RESPONSE_SCHEMA_TYPE_MISMATCH", "json_pointer": "$.price",
+     "message": "'49.99' is not of type 'number'",
+     "expected": "number", "actual": "string"}
+  ]
+}
+```
+
+---
+
 ## Quickstart: one-shot setup prompt
 
 Paste the prompt below into Hermes, Claude Code, Cursor, Codex, or any
@@ -229,11 +311,18 @@ mypy
 ### 3. Install as a Hermes plugin
 
 Hermes loads native directory plugins from `$HERMES_HOME/plugins/` (default
-`~/.hermes/plugins/`). Link this checkout during development:
+`~/.hermes/plugins/`). The installer is the supported route — it also installs
+the plugin's Python dependencies and records the source:
+
+```bash
+hermes plugins install "file://$PWD" --yes-deps --enable
+hermes plugins list
+```
+
+For a quick, throwaway link during development (no dependency installation):
 
 ```bash
 ln -s "$PWD" "${HERMES_HOME:-$HOME/.hermes}/plugins/contractguard"
-hermes plugins list
 hermes plugins enable contractguard
 ```
 
@@ -248,6 +337,13 @@ hermes plugins validate "$PWD"
 dependencies into its own environment; use the repository virtualenv for
 development and the flag only when installing into a real Hermes home.
 
+> **Restart a running gateway after installing.** Hermes installs plugin
+> dependencies into a versioned environment, and a gateway that is already
+> running keeps the environment it booted with. The plugin then loads but its
+> libraries are missing, and tools fail with `No module named 'yaml'`. Run
+> `hermes gateway restart` once after installing, and restart the Desktop app
+> too if it is open.
+
 ### 4. Start a session
 
 ```bash
@@ -256,6 +352,22 @@ hermes
 
 Then ask Hermes to inspect a contract, validate a payload, or verify a local
 endpoint.
+
+---
+
+## Try it in 60 seconds
+
+The repository ships a deterministic demo: a local API that returns HTTP 200
+with a **string** where the contract declares a **number**.
+
+```bash
+pip install -e ".[demo]"
+./demo/run_demo.sh
+```
+
+It starts the API on `127.0.0.1:8099` and prints five prompts to paste into
+Hermes. No credentials, no internet, no production target. The full 90-second
+video plan is in [`demo/STORYBOARD.md`](demo/STORYBOARD.md).
 
 ---
 
