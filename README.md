@@ -436,6 +436,27 @@ registrations, and a successful capability probe with no core overrides.
 
 ---
 
+## Where it runs
+
+ContractGuard is a **backend** plugin: it extends the agent runtime, so it works
+identically wherever Hermes runs the agent — classic CLI, Ink TUI, the Desktop
+app, ACP editors, and the messaging gateway. There is no separate Desktop half
+and none is needed, because the plugin ships no UI.
+
+| Surface | Tools visible to the model | Approval prompt |
+|---|---:|---|
+| Classic CLI | 8/8 | Prompted in the terminal |
+| Ink TUI | 8/8 | Prompted in the TUI |
+| **Desktop app** | **8/8** | **Prompted in the Desktop UI** |
+| ACP editors | 8/8 | Prompted in the editor |
+| Messaging gateway | 8/8 | Prompted in the chat platform |
+
+Every check was measured against Hermes' own per-platform tool snapshot, not
+assumed. Where no human can answer the approval prompt — cron, unattended API
+runs — promotion is **declined**, not performed silently.
+
+---
+
 ## Security model
 
 ContractGuard reads local specification files and can send HTTP requests, so its

@@ -27,7 +27,8 @@ Everything needed to list ContractGuard in the Hermes plugin catalog.
 | No private core imports | Done — `plugins.plugin_storage` is in the published plugin API |
 | No compiled binaries / bytecode / archives | Done — source only |
 | No credential reads outside Hermes routes | Done — no `.env`, no `auth.json` |
-| Approvals respected, fails closed unattended | Done — promotion is approval-gated |
+| Approvals respected, fails closed unattended | Done — promotion is approval-gated; verified against Hermes' own approval gate |
+| CLI **and** Desktop parity | Done — 8/8 tools visible on cli, tui, desktop, acp, telegram (measured on Hermes 0.23.1) |
 | Entry file structurally valid | Done — validated with Hermes' own script |
 | Catalog entry file prepared | `submission/plugin-catalog-entry.yaml` (set the real `sha`) |
 | PR description prepared | `submission/PR_DESCRIPTION.md` |
