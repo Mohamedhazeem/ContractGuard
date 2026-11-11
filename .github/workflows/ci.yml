@@ -65,8 +65,8 @@ jobs:
 
       - name: Install Hermes
         run: |
-          uv tool install "hermes-agent" --exclude-newer "3 days" || \
-          pip install --upgrade "hermes-agent"
+          uv tool install "hermes-agent>=0.21.6" || \
+          pip install --upgrade "hermes-agent>=0.21.6"
 
       - name: Plugin doctor
         run: hermes plugins doctor . --ci
