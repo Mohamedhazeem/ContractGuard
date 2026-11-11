@@ -4,18 +4,21 @@ from __future__ import annotations
 
 from typing import Any
 
+__version__ = "0.2.0"
+
 from .hooks.pre_tool_call import require_promotion_approval
 from .hooks.pre_verify import pre_verify_nudge
-from .tools.diff import diff_contract_tool as _diff_handler
-from .tools.history import history as _history_handler
-from .tools.inspect import inspect as _inspect_handler
-from .tools.ping import ping as _ping_handler
-from .tools.promote import promote_baseline as _promote_handler
-from .tools.register import register as _register_handler
+from .tools.diff import make_diff
+from .tools.history import history
+from .tools.inspect import make_inspect
+from .tools.ping import ping
+from .tools.promote import make_promote
+from .tools.register import make_register
 from .tools.schemas import DIFF, HISTORY, INSPECT, PING, PROMOTE, REGISTER, TEST, VALIDATE_REQUEST
-from .tools.test_api import test_api as _test_handler
-from .tools.validate_request import validate_request as _validate_request_handler
-from .version import __version__ as __version__
+from .tools.test_api import test_api
+from .tools.validate_request import validate_request
+
+__all__ = ["__version__", "register"]
 
 
 def register(ctx: Any) -> None:
@@ -24,49 +27,49 @@ def register(ctx: Any) -> None:
         name="contractguard_ping",
         toolset="contractguard",
         schema=PING,
-        handler=_ping_handler,
+        handler=ping,
     )
     ctx.register_tool(
         name="contractguard_inspect",
         toolset="contractguard",
         schema=INSPECT,
-        handler=_inspect_handler,
+        handler=make_inspect(ctx),
     )
     ctx.register_tool(
         name="contractguard_register",
         toolset="contractguard",
         schema=REGISTER,
-        handler=_register_handler,
+        handler=make_register(ctx),
     )
     ctx.register_tool(
         name="contractguard_validate_request",
         toolset="contractguard",
         schema=VALIDATE_REQUEST,
-        handler=_validate_request_handler,
+        handler=validate_request,
     )
     ctx.register_tool(
         name="contractguard_test",
         toolset="contractguard",
         schema=TEST,
-        handler=_test_handler,
+        handler=test_api,
     )
     ctx.register_tool(
         name="contractguard_diff",
         toolset="contractguard",
         schema=DIFF,
-        handler=_diff_handler,
+        handler=make_diff(ctx),
     )
     ctx.register_tool(
         name="contractguard_history",
         toolset="contractguard",
         schema=HISTORY,
-        handler=_history_handler,
+        handler=history,
     )
     ctx.register_tool(
         name="contractguard_promote_baseline",
         toolset="contractguard",
         schema=PROMOTE,
-        handler=_promote_handler,
+        handler=make_promote(ctx),
     )
     ctx.register_hook("pre_tool_call", require_promotion_approval)
     ctx.register_hook("pre_verify", pre_verify_nudge)

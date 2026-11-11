@@ -81,7 +81,11 @@ def register_service(
     if not _is_loopback(base_url):
         raise PolicyError("Live targets must be loopback addresses in the MVP.")
 
-    loaded: LoadedSpec = loader.load_file(Path(spec_path))
+    # Resolve the spec path once, at registration, so a later check works from
+    # any working directory. A relative path stored verbatim would break as
+    # soon as Hermes ran somewhere else.
+    resolved_spec_path = Path(spec_path).expanduser().resolve()
+    loaded: LoadedSpec = loader.load_file(resolved_spec_path)
     sha = loaded.snapshot.sha256
 
     existing = service_repository.get(service_id)
@@ -91,7 +95,7 @@ def register_service(
         service_id=service_id,
         base_url=base_url,
         environment=environment,
-        spec_path=spec_path,
+        spec_path=str(resolved_spec_path),
         created_at=created_at,
         updated_at=now,
     )
@@ -120,7 +124,7 @@ def register_service(
         service_id=service_id,
         base_url=base_url,
         environment=environment,
-        spec_path=spec_path,
+        spec_path=str(resolved_spec_path),
         spec_sha256=sha,
         candidate_baseline_created=candidate_created,
         approved_baseline_present=current is not None,

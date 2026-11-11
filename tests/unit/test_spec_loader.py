@@ -9,7 +9,14 @@ import pytest
 
 from contractguard.adapters.spec_loader import SpecLoader
 from contractguard.domain.errors import SpecValidationError, UnsupportedSpecError
-from contractguard.tools.inspect import inspect as inspect_handler
+from contractguard.tools.inspect import make_inspect
+
+
+class _FakeContext:
+    """Minimal stand-in for the Hermes plugin context."""
+
+    def session_cwd(self) -> str:
+        return str(Path.cwd())
 
 
 def _fixture(name: str) -> Path:
@@ -128,7 +135,9 @@ def test_load_file_raises_for_unsupported_version(tmp_path: Path) -> None:
 
 
 def test_inspect_handler_returns_json_for_valid_fixture() -> None:
-    result = json.loads(inspect_handler({"spec_path": "tests/fixtures/openapi/giftshop.yaml"}))
+    result = json.loads(
+        make_inspect(_FakeContext())({"spec_path": "tests/fixtures/openapi/giftshop.yaml"})
+    )
 
     assert result["status"] == "VALID"
     assert result["operation_count"] >= 3
@@ -136,6 +145,6 @@ def test_inspect_handler_returns_json_for_valid_fixture() -> None:
 
 
 def test_inspect_handler_requires_spec_path() -> None:
-    result = json.loads(inspect_handler({}))
+    result = json.loads(make_inspect(_FakeContext())({}))
 
     assert result["code"] == "INCOMPLETE"
