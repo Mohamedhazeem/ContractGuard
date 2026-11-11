@@ -6,7 +6,7 @@ Everything needed to list ContractGuard in the Hermes plugin catalog.
 
 | Item | State |
 |---|---|
-| Public repository | Done — https://github.com/Mohamedhazeem/contractguard (public, `main`) |
+| Public repository | Done — https://github.com/Mohamedhazeem/ContractGuard (public, `main`) |
 | Loadable plugin at the pinned commit | Done — `plugin.yaml` + `__init__.py` with `register(ctx)` |
 | Local validation (`hermes plugins validate --install-deps`) | Done — passes |
 | Plugin doctor (`hermes plugins doctor . --ci`) | Done — 8 tools, 2 hooks |
@@ -59,7 +59,7 @@ Everything needed to list ContractGuard in the Hermes plugin catalog.
    runs:
 
    ```bash
-   git clone --no-checkout https://github.com/Mohamedhazeem/contractguard
+   git clone --no-checkout https://github.com/Mohamedhazeem/ContractGuard
    cd contractguard && git checkout <SHA>
    hermes plugins validate . --install-deps
    ```

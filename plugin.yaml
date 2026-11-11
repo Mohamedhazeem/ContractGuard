@@ -12,7 +12,7 @@ version: "0.2.0"
 description: "Hermes-native OpenAPI request preflight, live response verification, and contract drift evidence"
 license: MIT
 author: "ContractGuard contributors"
-homepage: "https://github.com/Mohamedhazeem/contractguard"
+homepage: "https://github.com/Mohamedhazeem/ContractGuard"
 tags:
   - openapi
   - api-contracts

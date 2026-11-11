@@ -148,7 +148,7 @@ mypy                                        # 0 issues
 ```
 
 The pinned commit was also installed through the real installer into an isolated
-Hermes home (`hermes plugins install Mohamedhazeem/contractguard --ref <sha>
+Hermes home (`hermes plugins install Mohamedhazeem/ContractGuard --ref <sha>
 --yes-deps --enable`) and exercised end to end through Hermes' own tool
 registry:
 
