@@ -11,6 +11,9 @@ re-run the same check.
 
 > HTTP 200 is not proof your API is correct.
 
+![ContractGuard — Evidence before you ship](docs/banner.png)
+
+
 ---
 
 ## The problem
